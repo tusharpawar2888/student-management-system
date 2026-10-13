@@ -2,17 +2,21 @@
 pipeline {
     agent any
 
+    environment {
+        PYTHON = 'C:/Users/HP/AppData/Local/Python/bin/python.exe'
+    }
+
     stages {
         stage('Build') {
             steps {
-                bat 'python --version'
-                bat 'python -m pip install -r requirements.txt'
+                bat '"%PYTHON%" --version'
+                bat '"%PYTHON%" -m pip install -r requirements.txt'
             }
         }
 
         stage('Automated Testing') {
             steps {
-                bat 'python -m pytest -v --junitxml=test-results.xml'
+                bat '"%PYTHON%" -m pytest -v --junitxml=test-results.xml'
             }
             post {
                 always {
@@ -24,7 +28,7 @@ pipeline {
 
         stage('Code Quality Check') {
             steps {
-                bat 'python -m flake8 app.py tests/test_app.py'
+                bat '"%PYTHON%" -m flake8 app.py tests/test_app.py'
             }
         }
 
