@@ -1,13 +1,17 @@
-import os, sqlite3
+import os
+import sqlite3
 from pathlib import Path
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort
 
 ROOT = Path(__file__).resolve().parent
 
+
 def create_app(test_config=None):
     app = Flask(__name__)
-    app.config.update(SECRET_KEY=os.getenv("SECRET_KEY", "change-me-in-production"),
-                      DATABASE=os.getenv("DATABASE_PATH", str(ROOT / "students.db")))
+    app.config.update(SECRET_KEY=os.getenv("SECRET_KEY",
+                                           "change-me-in-production"),
+                      DATABASE=os.getenv("DATABASE_PATH",
+                                         str(ROOT / "students.db")))
     if test_config:
         app.config.update(test_config)
 
@@ -27,21 +31,31 @@ def create_app(test_config=None):
     def index():
         with db() as conn:
             total = conn.execute("SELECT COUNT(*) FROM students").fetchone()[0]
-            courses = conn.execute("SELECT course, COUNT(*) count FROM students GROUP BY course ORDER BY count DESC LIMIT 5").fetchall()
-            recent = conn.execute("SELECT * FROM students ORDER BY id DESC LIMIT 5").fetchall()
-        return render_template("index.html", total=total, courses=courses, recent=recent)
+            courses = conn.execute(
+                "SELECT course, COUNT(*) count FROM students GROUP BY course ORDER BY count DESC LIMIT 5").fetchall()
+            recent = conn.execute(
+                "SELECT * FROM students ORDER BY id DESC LIMIT 5").fetchall()
+        return render_template(
+            "index.html",
+            total=total,
+            courses=courses,
+            recent=recent)
 
     @app.get("/students")
     def students():
         q = request.args.get("q", "").strip()
         like = f"%{q}%"
         with db() as conn:
-            rows = conn.execute("SELECT * FROM students WHERE name LIKE ? OR email LIKE ? OR course LIKE ? ORDER BY id DESC",
-                                (like, like, like)).fetchall()
+            rows = conn.execute(
+                "SELECT * FROM students WHERE name LIKE ? OR email LIKE ? OR course LIKE ? ORDER BY id DESC",
+                (like,
+                 like,
+                 like)).fetchall()
         return render_template("students.html", students=rows, q=q)
 
     def validate(form):
-        name, email, course = (form.get(k, "").strip() for k in ("name", "email", "course"))
+        name, email, course = (form.get(k, "").strip()
+                               for k in ("name", "email", "course"))
         if not name or not email or not course:
             return None, "Please complete all required fields."
         if "@" not in email or "." not in email.rsplit("@", 1)[-1]:
@@ -54,21 +68,31 @@ def create_app(test_config=None):
             data, error = validate(request.form)
             if error:
                 flash(error, "error")
-                return render_template("student_form.html", student=None, page_title="Add Student")
+                return render_template(
+                    "student_form.html",
+                    student=None,
+                    page_title="Add Student")
             try:
                 with db() as conn:
-                    conn.execute("INSERT INTO students(name,email,course) VALUES(?,?,?)",
-                                 (data["name"], data["email"], data["course"]))
+                    conn.execute(
+                        "INSERT INTO students(name,email,course) VALUES(?,?,?)",
+                        (data["name"],
+                         data["email"],
+                            data["course"]))
                 flash("Student added successfully.", "success")
                 return redirect(url_for("students"))
             except sqlite3.IntegrityError:
                 flash("That email address is already registered.", "error")
-        return render_template("student_form.html", student=None, page_title="Add Student")
+        return render_template(
+            "student_form.html",
+            student=None,
+            page_title="Add Student")
 
     @app.route("/students/<int:sid>/edit", methods=["GET", "POST"])
     def edit_student(sid):
         with db() as conn:
-            student = conn.execute("SELECT * FROM students WHERE id=?", (sid,)).fetchone()
+            student = conn.execute(
+                "SELECT * FROM students WHERE id=?", (sid,)).fetchone()
         if student is None:
             abort(404)
         if request.method == "POST":
@@ -78,13 +102,22 @@ def create_app(test_config=None):
             else:
                 try:
                     with db() as conn:
-                        conn.execute("UPDATE students SET name=?,email=?,course=? WHERE id=?",
-                                     (data["name"], data["email"], data["course"], sid))
+                        conn.execute(
+                            "UPDATE students SET name=?,email=?,course=? WHERE id=?",
+                            (data["name"],
+                             data["email"],
+                                data["course"],
+                                sid))
                     flash("Student updated successfully.", "success")
                     return redirect(url_for("students"))
                 except sqlite3.IntegrityError:
-                    flash("That email address is already registered to another student.", "error")
-        return render_template("student_form.html", student=student, page_title="Edit Student")
+                    flash(
+                        "That email address is already registered to another student.",
+                        "error")
+        return render_template(
+            "student_form.html",
+            student=student,
+            page_title="Edit Student")
 
     @app.post("/students/<int:sid>/delete")
     def delete_student(sid):
@@ -98,13 +131,16 @@ def create_app(test_config=None):
     # JSON API routes retained for CI/CD checks and integrations.
     @app.get("/api/health")
     def health():
-        return jsonify(message="Student Management System is running", status="success")
+        return jsonify(
+            message="Student Management System is running",
+            status="success")
 
     @app.route("/api/students", methods=["GET", "POST"])
     def api_students():
         if request.method == "GET":
             with db() as conn:
-                rows = conn.execute("SELECT * FROM students ORDER BY id DESC").fetchall()
+                rows = conn.execute(
+                    "SELECT * FROM students ORDER BY id DESC").fetchall()
             return jsonify([dict(r) for r in rows])
         if not request.is_json:
             return jsonify(error="Content-Type must be application/json"), 400
@@ -113,8 +149,11 @@ def create_app(test_config=None):
             return jsonify(error=error), 400
         try:
             with db() as conn:
-                cur = conn.execute("INSERT INTO students(name,email,course) VALUES(?,?,?)",
-                                   (data["name"], data["email"], data["course"]))
+                cur = conn.execute(
+                    "INSERT INTO students(name,email,course) VALUES(?,?,?)",
+                    (data["name"],
+                     data["email"],
+                        data["course"]))
                 sid = cur.lastrowid
             return jsonify(id=sid, **data), 201
         except sqlite3.IntegrityError:
@@ -124,6 +163,7 @@ def create_app(test_config=None):
     def not_found(_):
         return render_template("404.html"), 404
     return app
+
 
 app = create_app()
 if __name__ == "__main__":
