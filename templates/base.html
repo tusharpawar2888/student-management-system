@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Overview{% endblock %} · StudentHub</title><link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}"></head>
+<body><aside class="sidebar"><a class="brand" href="{{ url_for('index') }}"><span class="logo">S</span><span>Student<span class="violet">Hub</span><small>MANAGEMENT PORTAL</small></span></a>
+<div class="nav-caption">WORKSPACE</div><a class="nav {% if request.endpoint=='index' %}active{% endif %}" href="{{ url_for('index') }}">▦ &nbsp; Overview</a>
+<a class="nav {% if request.endpoint in ['students','add_student','edit_student'] %}active{% endif %}" href="{{ url_for('students') }}">♙ &nbsp; Students</a>
+<div class="profile"><span class="avatar">SM</span><span><b>Administrator</b><small>Student portal</small></span></div></aside>
+<main><header class="topbar"><div><small class="overline">STUDENT MANAGEMENT SYSTEM</small><h1>{% block heading %}Overview{% endblock %}</h1></div><a class="btn primary" href="{{ url_for('add_student') }}">＋ Add student</a></header>
+<div class="content">{% with msgs=get_flashed_messages(with_categories=true) %}{% if msgs %}<div class="flashes">{% for kind,msg in msgs %}<div class="flash {{ kind }}">{{ msg }}<button class="close" type="button">×</button></div>{% endfor %}</div>{% endif %}{% endwith %}
+{% block content %}{% endblock %}<footer>StudentHub <span>•</span> Flask · SQLite · Jenkins CI/CD</footer></div></main><script src="{{ url_for('static',filename='js/app.js') }}"></script></body></html>
